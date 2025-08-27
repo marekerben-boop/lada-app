@@ -1,0 +1,24 @@
+{
+  "activities": [
+    {
+      "id": "flashcards",
+      "name": "Kartičky",
+      "path": "games/flashcards/index.html"
+    },
+    {
+      "id": "missing-letters",
+      "name": "Doplň písmena",
+      "path": "games/missing-letters/index.html"
+    },
+    {
+      "id": "word-match",
+      "name": "Párování",
+      "path": "games/word-match/index.html"
+    },
+    {
+      "id": "write-word",
+      "name": "Psaní",
+      "path": "games/write-word/index.html"
+    }
+  ]
+}
