@@ -1,0 +1,10 @@
+.hidden{ display:none !important; }
+
+/* Volitelné: efekt „srolované“ karty po přihlášení */
+.card--collapsed{
+  max-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: hidden;
+  transition: max-height .25s ease, padding .25s ease;
+}

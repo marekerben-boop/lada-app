@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vocab App – Admin (standalone)</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#0b1020;color:#e5e9f0}
+    .wrap{max-width:900px;margin:0 auto;padding:24px}
+    .card{background:#141a33;border:1px solid #20284a;border-radius:14px;padding:18px}
+    input,button,textarea,select{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2b355f;background:#0f1430;color:#e5e9f0}
+    button{border:0;background:linear-gradient(90deg,#7c3aed,#22c55e);cursor:pointer;font-weight:600}
+    .grid{display:grid;gap:12px}.g2{grid-template-columns:1fr 1fr}
+    .muted{color:#9aa3b2}.row{margin:8px 0}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border-bottom:1px solid #2b355f;padding:8px;text-align:left}
+    code{background:#0f1430;padding:2px 6px;border-radius:6px}
+  </style>
+
+  <!-- Firebase CDN -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>Admin (standalone)</h1>
+    <p class="muted">Vyzkoušíme přihlášení a práci s Firestore. Když tohle funguje, prostředí je OK.</p>
+    <div class="grid g2">
+      <div>
+        <h3>1) Přihlášení</h3>
+        <input id="email" placeholder="Email" />
+        <input id="pass" type="password" placeholder="Heslo" class="row"/>
+        <button id="btnLogin">Přihlásit / Založit</button>
+        <button id="btnLogout" class="row">Odhlásit</button>
+        <div id="who" class="muted row">Stav: nepřihlášen</div>
+      </div>
+      <div>
+        <h3>2) Test Firebase</h3>
+        <button id="btnTest">Otestovat inicializaci</button>
+        <pre id="log" class="row" style="white-space:pre-wrap;background:#0f1430;padding:10px;border-radius:10px;min-height:90px"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Balíčky slov (demo)</h3>
+    <div class="grid g2">
+      <input id="packName" placeholder="Název balíčku" />
+      <textarea id="packJson" rows="3" placeholder='[{"cz":"pes","en":"dog"}]'></textarea>
+    </div>
+    <button id="btnSavePack" class="row">Uložit balíček</button>
+    <table><thead><tr><th>Název</th><th>Počet</th><th>ID</th></tr></thead><tbody id="packs"></tbody></table>
+  </div>
+</div>
+
+<script defer>
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>> DOPLŇ TVŮJ CONFIG <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  const firebaseConfig = {
+    apiKey: "AIzaSyDxLM9oc3-zmhJRGYTDa04Wkjk7qS3gtl8",
+    authDomain: "lada-anglictina-app.firebaseapp.com",
+    projectId: "lada-anglictina-app",
+    storageBucket: "lada-anglictina-app.firebasestorage.app",
+    messagingSenderId: "281293994339",
+    appId: "1:281293994339:web:e4f798ff03c9a867b97b56",
+    measurementId: "G-64SV0CKN0P"
+  };
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  const log = (...a)=>{ const el = document.getElementById('log'); el.textContent += a.join(' ') + "\n"; console.log(...a); };
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      if (!window.firebase) { alert("Firebase se nenačetl"); return; }
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      // pokud je už inicializováno, nevadí
+      if (!/already exists/i.test(e.message)) throw e;
+    }
+
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    // UI elements
+    const who = document.getElementById('who');
+    const packsBody = document.getElementById('packs');
+
+    auth.onAuthStateChanged(u=>{
+      who.textContent = u ? `Přihlášen: ${u.email || '(anon)'}` : 'Stav: nepřihlášen';
+    });
+
+    // Test tlačítko
+    document.getElementById('btnTest').onclick = async ()=>{
+      try {
+        log("firebase SDK:", firebase.SDK_VERSION);
+        log("apps:", firebase.apps.length);
+        // ping na Firestore
+        const t = await db.collection('_ping').doc('probe').set({ts: Date.now()});
+        log("Firestore: zápis OK");
+        const r = await db.collection('_ping').doc('probe').get();
+        log("Firestore: čtení OK, ts =", r.data().ts);
+        // anonymní přihlášení (pro test)
+        await auth.signInAnonymously();
+        log("Auth: anonymní přihlášení OK, uid =", auth.currentUser && auth.currentUser.uid);
+      } catch (e) {
+        log("TEST ERROR:", e.message || e);
+        alert("Test selhal – koukni do Console/Network.");
+      }
+    };
+
+    // Login/Logout
+    document.getElementById('btnLogin').onclick = async ()=>{
+      const email = document.getElementById('email').value.trim();
+      const pass  = document.getElementById('pass').value;
+      try {
+        try { await auth.createUserWithEmailAndPassword(email, pass); }
+        catch(e){ if(e.code !== "auth/email-already-in-use") throw e; }
+        await auth.signInWithEmailAndPassword(email, pass);
+        log("Auth: přihlášení OK");
+        refreshPacks();
+      } catch (e) { log("LOGIN ERROR:", e.message || e); alert(e.message); }
+    };
+    document.getElementById('btnLogout').onclick = ()=> auth.signOut();
+
+    // Packs demo
+    document.getElementById('btnSavePack').onclick = async ()=>{
+      const name = document.getElementById('packName').value.trim() || "Balíček";
+      let pairs = [];
+      try { pairs = JSON.parse(document.getElementById('packJson').value || "[]"); }
+      catch(e){ return alert("Neplatné JSON"); }
+      await db.collection("packs").add({
+        name, pairs, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      log("Pack uložen");
+      refreshPacks();
+    };
+
+    async function refreshPacks(){
+      const snap = await db.collection("packs").orderBy("createdAt","desc").limit(10).get();
+      packsBody.innerHTML = "";
+      snap.forEach(d=>{
+        const p = d.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${p.name}</td><td>${(p.pairs||[]).length}</td><td>${d.id}</td>`;
+        packsBody.appendChild(tr);
+      });
+    }
+  });
+</script>
+</body>
+</html>

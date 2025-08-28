@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FoxyEdu app– Admin</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Firebase CDN (compat, stejné jako standalone) -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <!-- Init + logika -->
+  <script defer src="firebase.js"></script>
+  <script defer src="admin.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div id="loginCard" class="card">
+  <div class="card__head">Přihlášení učitele</div>
+
+  <!-- pole pro přihlášení obal do #loginFields -->
+  <div id="loginFields" class="card__body">
+    <input id="email" type="email" placeholder="email">
+    <input id="pass" type="password" placeholder="heslo">
+    <button id="loginBtn" class="btn">Přihlásit</button>
+  </div>
+
+  <!-- spodní lišta: stav + odhlášení -->
+  <div class="card__foot">
+    <span id="who">Stav: nepřihlášen</span>
+    <button id="logoutBtn" class="btn btn--xs hidden">Odhlásit</button>
+  </div>
+</div>
+
+
+    <div id="adminArea" class="card hidden">
+      <h3>Studenti</h3>
+      <div class="grid g2">
+        <input id="studentName" placeholder="Jméno studenta">
+        <button id="createStudent">Vytvořit studenta</button>
+      </div>
+      <table id="studentsTbl">
+        <thead><tr><th>Jméno</th><th>Kód</th><th>PIN</th><th>Akce</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div id="packsArea" class="card hidden">
+      <h3>Balíčky</h3>
+      <div class="grid g2">
+</div>
+<div class="grid g2">
+  <input id="packName" placeholder="Název balíčku">
+  <textarea id="packLines" rows="6" placeholder="Jedna dvojice na řádek:
+pes = dog
+kočka : cat
+dům ; house
+červený - red
+# komentář nebo prázdný řádek se ignoruje"></textarea>
+</div>
+<div class="grid g2" style="margin-top:8px">
+  <input id="csvFile" type="file" accept=".csv">
+  <button id="createPack">Uložit balíček</button>
+</div>
+      <table id="packsTbl">
+        <thead><tr><th>Název</th><th>Položek</th><th>Akce</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  
+
+    <div id="assignArea" class="card hidden">
+      <h3>Přiřadit úkol</h3>
+      <div class="grid g2">
+        <select id="studentSelect"></select>
+        <select id="packSelect"></select>
+      </div>
+      
+      <div class="grid g2" style="margin-top:8px">
+        <select id="activitySelect">
+  <option value="flashcards">Kartičky</option>
+  <option value="missing-letters">Doplň slovo</option>
+  <option value="word-match">Párování</option>
+  <option value="write-word">Psaní</option>
+</select>
+
+        <button id="assignBtn">Přiřadit</button>
+      </div>
+      <table id="assignTbl">
+        <thead><tr><th>Student</th><th>Balíček</th><th>Aktivita</th><th>Akce</th></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

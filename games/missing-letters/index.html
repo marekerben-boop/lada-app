@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Doplň chybějící písmena</title>
+
+ <link rel="stylesheet" href="/styles.css">   <!-- společné styly -->
+<script src="/firebase.js"></script>         <!-- globální init Firebase -->
+<script src="/games/sdk.js"></script>        <!-- nový SDK -->
+
+
+  <!-- Firebase stejné verze -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+
+  <style>
+    /* Doplňkové styly jen pro tuto hru */
+    .ml-header { display:flex; align-items:center; gap:10px; }
+    .ml-title { font-weight:700; font-size:22px; display:flex; align-items:center; gap:8px; }
+    .ml-sub { color:var(--muted); font-size:14px; }
+    .ml-prompt { text-align:center; margin:8px 0 12px; font-size:16px; }
+    .ml-masked {
+      font-size:28px; letter-spacing:2px; text-align:center;
+      background:#1f7ae0; color:#fff; padding:18px; border-radius:12px;
+    }
+    .ml-letters { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:16px; }
+    .ml-letter {
+      padding:10px 14px; border-radius:10px; background:#2b2b2b; color:#fff;
+      font-weight:600; cursor:pointer; user-select:none; transition:transform .05s ease;
+    }
+    .ml-letter:active { transform:scale(0.98); }
+    .ml-actions { display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+    .ml-feedback { text-align:center; min-height:20px; margin-top:6px; }
+    .ml-progress { text-align:center; margin-top:8px; font-size:14px; color:var(--muted); }
+    .btn-wide { min-width:140px; }
+  </style>
+</head>
+
+<body>
+  <div class="container" style="max-width:900px;margin:24px auto;padding:0 12px;">
+    <div class="card">
+      <div class="card__head">
+        <div class="ml-header">
+          <span class="ml-title">🧩 Doplň chybějící písmena</span>
+          <span id="hud" class="ml-sub">Kolo: – | Skóre: –</span>
+        </div>
+      </div>
+
+      <div class="card__body">
+        <div id="prompt" class="ml-prompt"></div>
+        <div id="masked" class="ml-masked">_ _ _ _</div>
+
+        <div id="letters" class="ml-letters"></div>
+
+        <div class="ml-actions">
+          <button id="clearBtn" type="button" class="btn btn--secondary btn-wide">Vymazat odpověď</button>
+          <button id="nextBtn" type="button" class="btn btn-wide">Další</button>
+        </div>
+
+        <div class="ml-feedback" id="feedback"></div>
+
+        <div class="ml-actions" style="margin-top:18px">
+          <a href="/student.html" class="btn btn--secondary">⬅️ Zpět na výběr her</a>
+          <button id="finishBtn" type="button" class="btn">Ukončit a uložit</button>
+        </div>
+
+        <div id="progress" class="ml-progress"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ===== Pomocné funkce UI ===== */
+const $ = (id) => document.getElementById(id);
+
+function chooseMaskPositions(word){
+  // zamaskujeme ~30% písmen mimo mezery
+  const idxs = [];
+  for (let i=0;i<word.length;i++) if (word[i] !== " ") idxs.push(i);
+  const hideCount = Math.max(1, Math.floor(idxs.length * 0.3));
+  const chosen = new Set();
+  while (chosen.size < hideCount) {
+    chosen.add( idxs[Math.floor(Math.random()*idxs.length)] );
+  }
+  return chosen; // set indexů, které jsou skryté
+}
+
+function renderMasked(original, filled){
+  // vytvoří string s podtržítky a vyplněnými písmeny
+  let out = "";
+  for (let i=0;i<original.length;i++){
+    const ch = original[i];
+    if (ch === " ") { out += " "; continue; }
+    out += (filled[i] ?? "_");
+  }
+  return out.replace(/./g, (c)=> c===" " ? "  " : c); // trochu širší mezery
+}
+
+function buildLetterBank(answer, needCount){
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+  const inAnswer = [...new Set(answer.toLowerCase().replace(/[^a-z]/g,"").split(""))];
+  const bank = new Set();
+  // nejdřív písmena, která určitě potřebujeme
+  inAnswer.forEach(l => bank.add(l));
+  // doplníme náhodné distraktory
+  while (bank.size < needCount){
+    bank.add(alphabet[Math.floor(Math.random()*alphabet.length)]);
+  }
+  return [...bank].sort(()=> Math.random()-0.5);
+}
+
+/* ===== Hra ===== */
+(async () => {
+  try {
+    const { pairs, assignmentId, direction, limit } = await GameSDK.init({ activityKey: "missing-letters" });
+
+    let round = 0;
+    let score = 0;
+
+    // stav aktuálního kola
+    let original = "";        // původní odpověď (např. "seal")
+    let maskedIdx = null;     // Set indexů, které jsou skryté
+    let filled = [];          // aktuálně vyplněné znaky na zamaskovaných pozicích (indexově)
+    let orderToFill = [];     // pořadí indexů, které vyplňujeme kliky (FIFO)
+
+    function updateHUD(){
+      $("hud").textContent = `Kolo: ${round+1} / ${pairs.length} | Skóre: ${score}`;
+      $("progress").textContent = `Směr: ${direction} • Limit: ${pairs.length}`;
+    }
+
+    function newRound(){
+      const p = pairs[round]; // {question, answer}
+      original = p.answer;
+      maskedIdx = chooseMaskPositions(original);
+      filled = Array(original.length).fill(null);
+      orderToFill = [...maskedIdx]; // které indexy budeme vyplňovat
+      $("prompt").textContent = p.question;
+      $("masked").textContent = renderMasked(original, filled);
+
+      // banka písmen (min 6, max 10)
+      const need = Math.min(10, Math.max(6, new Set(original.replace(/ /g,"").toLowerCase()).size + 3));
+      const letters = buildLetterBank(original, need);
+
+      const cont = $("letters");
+      cont.innerHTML = "";
+      letters.forEach(l => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ml-letter";
+        b.textContent = l;
+        b.onclick = () => placeLetter(l);
+        cont.appendChild(b);
+      });
+
+      $("feedback").textContent = "";
+      updateHUD();
+    }
+
+    function placeLetter(letter){
+      // najdi první nevyplněný maskovaný index v orderToFill
+      for (let k=0; k<orderToFill.length; k++){
+        const idx = orderToFill[k];
+        if (filled[idx] == null){
+          filled[idx] = letter;
+          $("masked").textContent = renderMasked(original, filled);
+          return;
+        }
+      }
+    }
+
+    function clearOne(){
+      // smaž poslední vyplněný z maskovaných (od konce)
+      for (let k=orderToFill.length-1; k>=0; k--){
+        const idx = orderToFill[k];
+        if (filled[idx] != null){
+          filled[idx] = null;
+          $("masked").textContent = renderMasked(original, filled);
+          break;
+        }
+      }
+    }
+
+    function clearAll(){
+      for (const idx of maskedIdx) filled[idx] = null;
+      $("masked").textContent = renderMasked(original, filled);
+      $("feedback").textContent = "";
+    }
+
+    function isSolved(){
+      for (let i=0;i<original.length;i++){
+        const ch = original[i];
+        if (ch === " ") continue;
+        if ((filled[i] ?? ch).toLowerCase() !== ch.toLowerCase()){
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // ovládání
+    $("clearBtn").onclick = clearAll;
+    $("nextBtn").onclick = () => {
+      const ok = isSolved();
+      if (ok){
+        score++;
+        $("feedback").textContent = "✅ Správně";
+      } else {
+        $("feedback").textContent = `❌ Správně: ${original}`;
+      }
+      round++;
+      if (round < pairs.length) {
+        setTimeout(newRound, 450);
+      } else {
+        $("feedback").textContent += " • Konec série – můžeš uložit výsledek.";
+      }
+      updateHUD();
+    };
+
+    // klávesnice: Backspace = mazat poslední, Enter = další
+    window.addEventListener("keydown", (e)=>{
+      if (e.key === "Backspace"){ e.preventDefault(); clearOne(); }
+      if (e.key === "Enter"){ e.preventDefault(); $("nextBtn").click(); }
+      // písmena z klávesnice rovnou vkládáme
+      if (/^[a-zA-Z]$/.test(e.key)){ placeLetter(e.key.toLowerCase()); }
+    }, { passive:false });
+
+    $("finishBtn").onclick = async ()=>{
+      await GameSDK.reportResult({
+        assignmentId,
+        score,
+        total: pairs.length,
+        extra: { direction, limit, activity: "missing-letters" }
+      });
+      alert(`Uloženo: ${score}/${pairs.length}`);
+      location.href = "/student.html";
+    };
+
+    // start
+    newRound();
+
+  } catch (err){
+    console.error("Chyba při initu hry:", err);
+    alert(err?.message || "Nepodařilo se načíst data pro hru.");
+  }
+})();
+</script>
+</body>
+</html>
