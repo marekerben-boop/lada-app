@@ -389,16 +389,37 @@ el.savePackBtn?.addEventListener('click', async () => {
 
 function ensureActivitySelectOptions() {
   if (!el.activitySelect) return;
-  // Pokud už máš v HTML ručně, jen doplníme chybějící/normalizujeme
-  const current = new Set($$('#activitySelect option').map(o => o.value));
-  // vždy chceme preferovat klíče z ACTIVITIES (včetně aliasů)
-  for (const key of Object.keys(ACTIVITIES)) {
-    if (!current.has(key)) {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = ACTIVITIES[key].name;
-      el.activitySelect.appendChild(opt);
+
+  // Zajistíme, že select obsahuje každou aktivitu jen jednou, vždy s kanonickým id
+  const seen = new Set();
+
+  // Normalizujeme existující <option> a odstraníme duplicitní aliasy
+  $$('#activitySelect option').forEach(opt => {
+    const act = activityFromKey(opt.value);
+    if (!act) return; // neznámá hodnota
+
+    // pokud už jsme kanonické id viděli, odstraníme aliasovou položku
+    if (seen.has(act.id)) {
+      opt.remove();
+      return;
     }
+
+    // přepíšeme hodnotu i text na kanonické údaje
+    opt.value = act.id;
+    opt.textContent = act.name;
+    seen.add(act.id);
+  });
+
+  // Doplníme chybějící aktivity (aliasy ignorujeme)
+  for (const key of Object.keys(ACTIVITIES)) {
+    const act = ACTIVITIES[key];
+    if (seen.has(act.id)) continue;
+
+    const opt = document.createElement('option');
+    opt.value = act.id;
+    opt.textContent = act.name;
+    el.activitySelect.appendChild(opt);
+    seen.add(act.id);
   }
 }
 
