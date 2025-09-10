@@ -51,7 +51,7 @@
       <textarea id="packJson" rows="3" placeholder='[{"cz":"pes","en":"dog"}]'></textarea>
     </div>
     <button id="btnSavePack" class="row">Uložit balíček</button>
-    <table><thead><tr><th>Název</th><th>Počet</th><th>ID</th></tr></thead><tbody id="packs"></tbody></table>
+    <table><thead><tr><th>Název</th><th>Počet</th></tr></thead><tbody id="packs"></tbody></table>
   </div>
 </div>
 
@@ -61,7 +61,7 @@
     apiKey: "AIzaSyDxLM9oc3-zmhJRGYTDa04Wkjk7qS3gtl8",
     authDomain: "lada-anglictina-app.firebaseapp.com",
     projectId: "lada-anglictina-app",
-    storageBucket: "lada-anglictina-app.firebasestorage.app",
+    storageBucket: "lada-anglictina-app.appspot.com",
     messagingSenderId: "281293994339",
     appId: "1:281293994339:web:e4f798ff03c9a867b97b56",
     measurementId: "G-64SV0CKN0P"
@@ -142,7 +142,7 @@
       snap.forEach(d=>{
         const p = d.data();
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${p.name}</td><td>${(p.pairs||[]).length}</td><td>${d.id}</td>`;
+        tr.innerHTML = `<td>${p.name}</td><td>${(p.pairs||[]).length}</td>`;
         packsBody.appendChild(tr);
       });
     }

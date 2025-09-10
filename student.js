@@ -117,9 +117,11 @@ function resolveActivityName(key, fallbackName) {
 }
 function resolveActivityPath(key) {
   const map = activitiesMap || DEFAULT_ACTIVITIES;
-  const raw = map[key]?.path;
+  let raw = map[key]?.path;
   if (!raw) return undefined;
-  return raw.startsWith('/') ? raw : `/games/${raw}`;
+  raw = raw.replace(/^\.?\/+, '');          // remove leading ./ or /
+  if (raw.startsWith('games/')) raw = raw.slice(6); // drop existing games/
+  return `/games/${raw}`;
 }
 
 // ====== Auth ======
@@ -241,7 +243,7 @@ function renderAssignments(items) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${asg.packName || packId || '—'}</td>
+      <td>${asg.packName || '—'}</td>
       <td>${name}</td>
       <td>${status}</td>
       <td>
@@ -326,7 +328,7 @@ auth.onAuthStateChanged(async (u) => {
 
   if (u && savedId && !currentStudent) {
     currentStudent = { id: savedId, name: savedName || '' };
-    whoEl.textContent = `Přihlášen: ${currentStudent.name || savedId}`;
+    whoEl.textContent = `Přihlášen: ${currentStudent.name || currentStudent.code || ''}`;
     loginCard?.classList?.add('hidden');
     logoutBtn?.classList?.remove('hidden');
     studentArea?.classList?.remove('hidden');
