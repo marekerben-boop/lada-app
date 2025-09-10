@@ -52,21 +52,28 @@ const state = {
 
 /* ========= ACTIVITY MAP =========
    Klíče (id) musí odpovídat složkám v /games/<id>/index.html
-   Přidávám aliasy pro starší názvy ("matching" -> "word-match", "typing" -> "write-word")
+   KEY_ALIASES mapuje starší názvy ("matching", "typing") na kanonické id.
 */
 const ACTIVITIES = {
   'flashcards':     { id: 'flashcards',     name: 'Kartičky',       path: 'games/flashcards/index.html' },
   'missing-letters':{ id: 'missing-letters',name: 'Doplň písmena',  path: 'games/missing-letters/index.html' },
   'word-match':     { id: 'word-match',     name: 'Spoj dvojice',   path: 'games/word-match/index.html' },
   'write-word':     { id: 'write-word',     name: 'Psaní',          path: 'games/write-word/index.html' },
-
-  // aliasy kvůli minulým hodnotám ve selectu
-  'matching':       { id: 'word-match',     name: 'Spoj dvojice',   path: 'games/word-match/index.html' },
-  'typing':         { id: 'write-word',     name: 'Psaní',          path: 'games/write-word/index.html' },
 };
 
+// aliasy starších názvů → kanonické id
+const KEY_ALIASES = {
+  'matching': 'word-match',
+  'typing':   'write-word',
+};
+
+function normalizeActivityKey(keyRaw) {
+  const k = (keyRaw || '').trim().toLowerCase();
+  return KEY_ALIASES[k] || k;
+}
+
 function activityFromKey(keyRaw) {
-  const key = (keyRaw || '').trim();
+  const key = normalizeActivityKey(keyRaw);
   return ACTIVITIES[key] || null;
 }
 
