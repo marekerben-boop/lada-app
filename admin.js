@@ -163,7 +163,6 @@ function renderStudentsTable() {
       <td>${s.name || ''}</td>
       <td>${mono(s.code || '')}</td>
       <td>${mono(s.pin || '')}</td>
-      <td class="mono small">${s.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${s.id}">upravit</a> |
@@ -249,7 +248,6 @@ function renderPacksTable() {
     tr.innerHTML = `
       <td>${p.name || ''}</td>
       <td>${count}</td>
-      <td class="mono small">${p.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${p.id}">upravit</a> |
@@ -440,7 +438,6 @@ function renderAssignmentsTable() {
       <td>${asg.studentName || asg.studentId}</td>
       <td>${asg.packName || asg.packId}</td>
       <td>${asg.activityName || asg.activityId || '-'}</td>
-      <td class="mono small">${asg.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${asg.id}">upravit</a> |
