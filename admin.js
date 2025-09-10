@@ -52,21 +52,28 @@ const state = {
 
 /* ========= ACTIVITY MAP =========
    Klíče (id) musí odpovídat složkám v /games/<id>/index.html
-   Přidávám aliasy pro starší názvy ("matching" -> "word-match", "typing" -> "write-word")
+   KEY_ALIASES mapuje starší názvy ("matching", "typing") na kanonické id.
 */
 const ACTIVITIES = {
   'flashcards':     { id: 'flashcards',     name: 'Kartičky',       path: 'games/flashcards/index.html' },
   'missing-letters':{ id: 'missing-letters',name: 'Doplň písmena',  path: 'games/missing-letters/index.html' },
   'word-match':     { id: 'word-match',     name: 'Spoj dvojice',   path: 'games/word-match/index.html' },
   'write-word':     { id: 'write-word',     name: 'Psaní',          path: 'games/write-word/index.html' },
-
-  // aliasy kvůli minulým hodnotám ve selectu
-  'matching':       { id: 'word-match',     name: 'Spoj dvojice',   path: 'games/word-match/index.html' },
-  'typing':         { id: 'write-word',     name: 'Psaní',          path: 'games/write-word/index.html' },
 };
 
+// aliasy starších názvů → kanonické id
+const KEY_ALIASES = {
+  'matching': 'word-match',
+  'typing':   'write-word',
+};
+
+function normalizeActivityKey(keyRaw) {
+  const k = (keyRaw || '').trim().toLowerCase();
+  return KEY_ALIASES[k] || k;
+}
+
 function activityFromKey(keyRaw) {
-  const key = (keyRaw || '').trim();
+  const key = normalizeActivityKey(keyRaw);
   return ACTIVITIES[key] || null;
 }
 
@@ -163,7 +170,6 @@ function renderStudentsTable() {
       <td>${s.name || ''}</td>
       <td>${mono(s.code || '')}</td>
       <td>${mono(s.pin || '')}</td>
-      <td class="mono small">${s.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${s.id}">upravit</a> |
@@ -249,7 +255,6 @@ function renderPacksTable() {
     tr.innerHTML = `
       <td>${p.name || ''}</td>
       <td>${count}</td>
-      <td class="mono small">${p.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${p.id}">upravit</a> |
@@ -389,16 +394,37 @@ el.savePackBtn?.addEventListener('click', async () => {
 
 function ensureActivitySelectOptions() {
   if (!el.activitySelect) return;
-  // Pokud už máš v HTML ručně, jen doplníme chybějící/normalizujeme
-  const current = new Set($$('#activitySelect option').map(o => o.value));
-  // vždy chceme preferovat klíče z ACTIVITIES (včetně aliasů)
-  for (const key of Object.keys(ACTIVITIES)) {
-    if (!current.has(key)) {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = ACTIVITIES[key].name;
-      el.activitySelect.appendChild(opt);
+
+  // Zajistíme, že select obsahuje každou aktivitu jen jednou, vždy s kanonickým id
+  const seen = new Set();
+
+  // Normalizujeme existující <option> a odstraníme duplicitní aliasy
+  $$('#activitySelect option').forEach(opt => {
+    const act = activityFromKey(opt.value);
+    if (!act) return; // neznámá hodnota
+
+    // pokud už jsme kanonické id viděli, odstraníme aliasovou položku
+    if (seen.has(act.id)) {
+      opt.remove();
+      return;
     }
+
+    // přepíšeme hodnotu i text na kanonické údaje
+    opt.value = act.id;
+    opt.textContent = act.name;
+    seen.add(act.id);
+  });
+
+  // Doplníme chybějící aktivity (aliasy ignorujeme)
+  for (const key of Object.keys(ACTIVITIES)) {
+    const act = ACTIVITIES[key];
+    if (seen.has(act.id)) continue;
+
+    const opt = document.createElement('option');
+    opt.value = act.id;
+    opt.textContent = act.name;
+    el.activitySelect.appendChild(opt);
+    seen.add(act.id);
   }
 }
 
@@ -419,7 +445,6 @@ function renderAssignmentsTable() {
       <td>${asg.studentName || asg.studentId}</td>
       <td>${asg.packName || asg.packId}</td>
       <td>${asg.activityName || asg.activityId || '-'}</td>
-      <td class="mono small">${asg.id}</td>
       <td class="small">
         <span class="muted">
           [<a href="#" data-act="edit" data-id="${asg.id}">upravit</a> |

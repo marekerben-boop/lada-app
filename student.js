@@ -117,9 +117,11 @@ function resolveActivityName(key, fallbackName) {
 }
 function resolveActivityPath(key) {
   const map = activitiesMap || DEFAULT_ACTIVITIES;
-  const raw = map[key]?.path;
+  let raw = map[key]?.path;
   if (!raw) return undefined;
-  return raw.startsWith('/') ? raw : `/games/${raw}`;
+  raw = raw.replace(/^\.?\/+, '');          // remove leading ./ or /
+  if (raw.startsWith('games/')) raw = raw.slice(6); // drop existing games/
+  return `/games/${raw}`;
 }
 
 // ====== Auth ======
