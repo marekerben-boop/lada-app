@@ -27,7 +27,7 @@
   </div>
 </div>
 <script>
-(async () => {
+window.addEventListener('DOMContentLoaded', async () => {
   try {
     const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "word-match" });
     const left = pairs.map(p=>({text:p.question, id: p.question}));
@@ -83,7 +83,7 @@
     console.error('Chyba při initu hry:', err);
     alert(err?.message || 'Nepodařilo se načíst data pro hru.');
   }
-})();
+});
 </script>
 </body>
 </html>

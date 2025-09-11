@@ -38,7 +38,7 @@
   </div>
 </div>
 <script>
-(async () => {
+window.addEventListener('DOMContentLoaded', async () => {
   try {
     const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "flashcards" });
     let i = 0, right = 0;
@@ -63,7 +63,7 @@
     console.error('Chyba při initu hry:', err);
     alert(err?.message || 'Nepodařilo se načíst data pro hru.');
   }
-})();
+});
 </script>
 </body>
 </html>

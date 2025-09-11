@@ -112,7 +112,7 @@ function buildLetterBank(answer, needCount){
 }
 
 /* ===== Hra ===== */
-(async () => {
+window.addEventListener('DOMContentLoaded', async () => {
   try {
     const { pairs, assignmentId, direction, limit } = await GameSDK.init({ activityKey: "missing-letters" });
 
@@ -244,7 +244,7 @@ function buildLetterBank(answer, needCount){
     console.error("Chyba při initu hry:", err);
     alert(err?.message || "Nepodařilo se načíst data pro hru.");
   }
-})();
+});
 </script>
 </body>
 </html>
