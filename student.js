@@ -55,6 +55,7 @@ const NAME_ALIASES_CS = {
   'dopln-pismena': 'missing-letters',
   'dopln-chybejici-pismena': 'missing-letters',
   'parovani': 'word-match',
+  'spoj-dvojice': 'word-match',
   'psani': 'write-word',
   'psani-slova': 'write-word',
   'karticky': 'flashcards',
@@ -177,7 +178,7 @@ function logoutStudent() {
 // ====== Assignments ======
 function deriveActivityKeyFromAsg(asg) {
   // 1) machine pole
-  let key = normalizeActivityKey(asg.activity || asg.activityKey || asg.game || '');
+  let key = normalizeActivityKey(asg.activityId || asg.activity || asg.activityKey || asg.game || '');
   if (isKnownKey(key)) return key;
 
   // 2) podle názvu (case/diakritika ignor)
