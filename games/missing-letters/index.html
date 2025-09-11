@@ -114,7 +114,7 @@ function buildLetterBank(answer, needCount){
 /* ===== Hra ===== */
 (async () => {
   try {
-    const { pairs, assignmentId, direction, limit } = await GameSDK.init({ activityKey: "missing-letters" });
+    const { pairs, assignmentId, direction } = await GameSDK.init();
 
     let round = 0;
     let score = 0;
@@ -231,7 +231,7 @@ function buildLetterBank(answer, needCount){
         assignmentId,
         score,
         total: pairs.length,
-        extra: { direction, limit, activity: "missing-letters" }
+        extra: { direction, activity: "missing-letters" }
       });
       alert(`Uloženo: ${score}/${pairs.length}`);
       location.href = "/student.html";

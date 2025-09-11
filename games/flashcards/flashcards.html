@@ -39,7 +39,7 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "flashcards" });
+  const { pairs, assignmentId, direction } = await GameSDK.init();
   let i = 0, right = 0;
   const el = (id)=>document.getElementById(id);
   function show() {

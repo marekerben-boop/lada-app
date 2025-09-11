@@ -38,7 +38,7 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "word-match" });
+  const { pairs, assignmentId, direction } = await GameSDK.init();
   const left = pairs.map(p=>({text:p.question, id: p.question}));
   const right = pairs.map(p=>({text:p.answer, id: p.question}));
   // shuffle
