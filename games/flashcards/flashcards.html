@@ -10,15 +10,14 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- Firebase + SDK (očekává se, že /firebase.js sedí v kořeni webu) -->
-  <script defer src="/firebase.js"></script>
-  <script defer src="../sdk.js"></script>
+    <!-- Firebase + SDK (očekává se, že firebase.js sedí v kořeni webu) -->
+    <script defer src="../firebase.js"></script>
+    <script defer src="../sdk.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="card">
-    <h1>Flashcards</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+      <h1>Flashcards</h1>
     
 <div id="panel" class="row">
   <div id="q" class="badge" style="font-size:28px"></div>
@@ -39,25 +38,30 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "flashcards" });
-  let i = 0, right = 0;
-  const el = (id)=>document.getElementById(id);
-  function show() {
-    if (!pairs.length) { el("q").textContent = "Žádná data"; return; }
-    const cur = pairs[i];
-    el("q").textContent = cur.question;
-    el("a").textContent = "";
+  try {
+    const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "flashcards" });
+    let i = 0, right = 0;
+    const el = (id)=>document.getElementById(id);
+    function show() {
+      if (!pairs.length) { el("q").textContent = "Žádná data"; return; }
+      const cur = pairs[i];
+      el("q").textContent = cur.question;
+      el("a").textContent = "";
+    }
+    el("show").onclick = ()=> { el("a").textContent = pairs[i].answer; };
+    el("next").onclick = ()=> { i = (i+1) % pairs.length; show(); };
+    el("ok").onclick = ()=> { right++; i = (i+1) % pairs.length; show(); };
+    el("no").onclick = ()=> { i = (i+1) % pairs.length; show(); };
+    el("finish").onclick = async ()=>{
+      await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: {direction} });
+      alert(`Uloženo: ${right}/${pairs.length}`);
+      location.href = "../student.html";
+    };
+    show();
+  } catch (err) {
+    console.error('Chyba při initu hry:', err);
+    alert(err?.message || 'Nepodařilo se načíst data pro hru.');
   }
-  el("show").onclick = ()=> { el("a").textContent = pairs[i].answer; };
-  el("next").onclick = ()=> { i = (i+1) % pairs.length; show(); };
-  el("ok").onclick = ()=> { right++; i = (i+1) % pairs.length; show(); };
-  el("no").onclick = ()=> { i = (i+1) % pairs.length; show(); };
-  el("finish").onclick = async ()=>{
-    await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: {direction} });
-    alert(`Uloženo: ${right}/${pairs.length}`);
-    location.href = "/student.html";
-  };
-  show();
 })();
 </script>
 </body>

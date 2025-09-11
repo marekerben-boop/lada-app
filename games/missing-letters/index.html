@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Doplň chybějící písmena</title>
 
- <link rel="stylesheet" href="/styles.css">   <!-- společné styly -->
+ <link rel="stylesheet" href="../styles.css">   <!-- společné styly -->
 
   <!-- Firebase stejné verze -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script defer src="/firebase.js"></script>         <!-- globální init Firebase -->
-  <script defer src="/games/sdk.js"></script>        <!-- nový SDK -->
+    <script defer src="../firebase.js"></script>         <!-- globální init Firebase -->
+    <script defer src="../sdk.js"></script>              <!-- nový SDK -->
 
 
   <style>
@@ -62,7 +62,7 @@
         <div class="ml-feedback" id="feedback"></div>
 
         <div class="ml-actions" style="margin-top:18px">
-          <a href="/student.html" class="btn btn--secondary">⬅️ Zpět na výběr her</a>
+            <a href="../student.html" class="btn btn--secondary">⬅️ Zpět na výběr her</a>
           <button id="finishBtn" type="button" class="btn">Ukončit a uložit</button>
         </div>
 
@@ -234,7 +234,7 @@ function buildLetterBank(answer, needCount){
         extra: { direction, limit, activity: "missing-letters" }
       });
       alert(`Uloženo: ${score}/${pairs.length}`);
-      location.href = "/student.html";
+        location.href = "../student.html";
     };
 
     // start

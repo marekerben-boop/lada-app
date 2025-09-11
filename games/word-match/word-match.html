@@ -10,15 +10,14 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- Firebase + SDK (očekává se, že /firebase.js sedí v kořeni webu) -->
-  <script defer src="/firebase.js"></script>
-  <script defer src="../sdk.js"></script>
+    <!-- Firebase + SDK (očekává se, že firebase.js sedí v kořeni webu) -->
+    <script defer src="../firebase.js"></script>
+    <script defer src="../sdk.js"></script>
 </head>
 <body>
 <div class="container">
   <div class="card">
-    <h1>Word Match (spoj dvojice)</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+      <h1>Word Match (spoj dvojice)</h1>
     
 <div class="row grid-2" id="cols"></div>
 <div class="small">Klikni nejprve na výraz vlevo, pak na překlad vpravo.</div>
@@ -29,56 +28,61 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "word-match" });
-  const left = pairs.map(p=>({text:p.question, id: p.question}));
-  const right = pairs.map(p=>({text:p.answer, id: p.question}));
-  // shuffle
-  right.sort(()=>Math.random()-0.5);
-  const cols = document.getElementById("cols");
-  cols.innerHTML = `<div class="col" id="L"></div><div class="col" id="R"></div>`;
-  const L = document.getElementById("L");
-  const R = document.getElementById("R");
-  const prog = document.getElementById("progress");
-  let selectedLeft=null, selectedRight=null, solved=0;
-  function renderList(el, arr, side){
-    el.innerHTML = "";
-    arr.forEach(x=>{
-      const d = document.createElement("div");
-      d.className = "item";
-      d.textContent = x.text;
-      d.dataset.id = x.id;
-      d.onclick = ()=>{
-        if (d.classList.contains("done")) return;
-        el.querySelectorAll(".item").forEach(n=>n.classList.remove("active"));
-        d.classList.add("active");
-        if (side==="L"){ selectedLeft = x; }
-        else { selectedRight = x; }
-        check();
-      };
-      el.appendChild(d);
-    });
-  }
-  function check(){
-    if (selectedLeft && selectedRight){
-      const ok = selectedLeft.id === selectedRight.id;
-      const mark = (el, id) => {
-        const n = el.querySelector(`.item[data-id="${id}"]`);
-        if (n){ n.classList.remove("active"); if (ok){ n.classList.add("done"); n.style.pointerEvents="none"; } }
-      };
-      mark(L, selectedLeft.id); mark(R, selectedRight.id);
-      if (ok) solved++;
-      selectedLeft=null; selectedRight=null;
-      prog.textContent = `Správně: ${solved}/${pairs.length}`;
+  try {
+    const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "word-match" });
+    const left = pairs.map(p=>({text:p.question, id: p.question}));
+    const right = pairs.map(p=>({text:p.answer, id: p.question}));
+    // shuffle
+    right.sort(()=>Math.random()-0.5);
+    const cols = document.getElementById("cols");
+    cols.innerHTML = `<div class="col" id="L"></div><div class="col" id="R"></div>`;
+    const L = document.getElementById("L");
+    const R = document.getElementById("R");
+    const prog = document.getElementById("progress");
+    let selectedLeft=null, selectedRight=null, solved=0;
+    function renderList(el, arr, side){
+      el.innerHTML = "";
+      arr.forEach(x=>{
+        const d = document.createElement("div");
+        d.className = "item";
+        d.textContent = x.text;
+        d.dataset.id = x.id;
+        d.onclick = ()=>{
+          if (d.classList.contains("done")) return;
+          el.querySelectorAll(".item").forEach(n=>n.classList.remove("active"));
+          d.classList.add("active");
+          if (side==="L"){ selectedLeft = x; }
+          else { selectedRight = x; }
+          check();
+        };
+        el.appendChild(d);
+      });
     }
+    function check(){
+      if (selectedLeft && selectedRight){
+        const ok = selectedLeft.id === selectedRight.id;
+        const mark = (el, id) => {
+          const n = el.querySelector(`.item[data-id="${id}"]`);
+          if (n){ n.classList.remove("active"); if (ok){ n.classList.add("done"); n.style.pointerEvents="none"; } }
+        };
+        mark(L, selectedLeft.id); mark(R, selectedRight.id);
+        if (ok) solved++;
+        selectedLeft=null; selectedRight=null;
+        prog.textContent = `Správně: ${solved}/${pairs.length}`;
+      }
+    }
+    renderList(L, left, "L");
+    renderList(R, right, "R");
+    document.getElementById("finish").onclick = async ()=>{
+      await GameSDK.reportResult({ assignmentId, score: solved, total: pairs.length, extra: {direction} });
+      alert(`Uloženo: ${solved}/${pairs.length}`);
+      location.href = "../student.html";
+    };
+    prog.textContent = `Správně: 0/${pairs.length}`;
+  } catch (err) {
+    console.error('Chyba při initu hry:', err);
+    alert(err?.message || 'Nepodařilo se načíst data pro hru.');
   }
-  renderList(L, left, "L");
-  renderList(R, right, "R");
-  document.getElementById("finish").onclick = async ()=>{
-    await GameSDK.reportResult({ assignmentId, score: solved, total: pairs.length, extra: {direction} });
-    alert(`Uloženo: ${solved}/${pairs.length}`);
-    location.href = "/student.html";
-  };
-  prog.textContent = `Správně: 0/${pairs.length}`;
 })();
 </script>
 </body>

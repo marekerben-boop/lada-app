@@ -4,30 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Write Word (napiš překlad)</title>
-  <link rel="stylesheet" href="/styles.css">   <!-- společné styly -->
+    <link rel="stylesheet" href="../styles.css">   <!-- společné styly -->
 
   <!-- Firebase (compat) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script defer src="/firebase.js"></script>         <!-- globální init Firebase -->
-  <script defer src="/games/sdk.js"></script>        <!-- nový SDK -->
-
-  <script>
-  const params = new URLSearchParams(location.search);
-  const packId = params.get('pack');
-  const uid = params.get('uid'); // volitelné
-  if (!packId) {
-    alert('Chybí parametr pack.');
-  }
-</script>
+    <script defer src="../firebase.js"></script>         <!-- globální init Firebase -->
+    <script defer src="../sdk.js"></script>              <!-- nový SDK -->
 
 </head>
 <body>
 <div class="container">
   <div class="card">
-    <h1>Write Word (napiš překlad)</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+      <h1>Write Word (napiš překlad)</h1>
     
 <div class="row">
   <div class="badge" id="q" style="font-size:24px"></div>
@@ -41,36 +31,41 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "write-word" });
-  let i=0, right=0;
-  const el = id=>document.getElementById(id);
-  function show(){
-    if (!pairs.length){ el("q").textContent="Žádná data"; return; }
-    el("q").textContent = pairs[i].question;
-    el("answer").value="";
-    el("answer").focus();
-    el("progress").textContent = `${i+1}/${pairs.length} • Správně: ${right}`;
-    el("feedback").textContent = "";
-  }
-  el("answer").addEventListener("keydown", (e)=>{
-    if (e.key==="Enter"){
-      const guess = el("answer").value.trim().toLowerCase();
-      const ok = guess === pairs[i].answer.trim().toLowerCase();
-      if (ok){ right++; el("feedback").textContent = "✅ Správně"; }
-      else { el("feedback").textContent = `❌ Správně: ${pairs[i].answer}`; }
-      i++; if (i>=pairs.length){ i=pairs.length-1; }
-      setTimeout(()=>{ if (i < pairs.length-0) { show(); } }, 400);
-      if (i>=pairs.length-0){
-        // hotovo
-      }
+  try {
+    const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "write-word" });
+    let i=0, right=0;
+    const el = id=>document.getElementById(id);
+    function show(){
+      if (!pairs.length){ el("q").textContent="Žádná data"; return; }
+      el("q").textContent = pairs[i].question;
+      el("answer").value="";
+      el("answer").focus();
+      el("progress").textContent = `${i+1}/${pairs.length} • Správně: ${right}`;
+      el("feedback").textContent = "";
     }
-  });
-  document.getElementById("finish").onclick = async ()=>{
-    await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: {direction} });
-    alert(`Uloženo: ${right}/${pairs.length}`);
-    location.href = "/student.html";
-  };
-  show();
+    el("answer").addEventListener("keydown", (e)=>{
+      if (e.key==="Enter"){
+        const guess = el("answer").value.trim().toLowerCase();
+        const ok = guess === pairs[i].answer.trim().toLowerCase();
+        if (ok){ right++; el("feedback").textContent = "✅ Správně"; }
+        else { el("feedback").textContent = `❌ Správně: ${pairs[i].answer}`; }
+        i++; if (i>=pairs.length){ i=pairs.length-1; }
+        setTimeout(()=>{ if (i < pairs.length-0) { show(); } }, 400);
+        if (i>=pairs.length-0){
+          // hotovo
+        }
+      }
+    });
+    document.getElementById("finish").onclick = async ()=>{
+      await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: {direction} });
+      alert(`Uloženo: ${right}/${pairs.length}`);
+      location.href = "../student.html";
+    };
+    show();
+  } catch (err) {
+    console.error('Chyba při initu hry:', err);
+    alert(err?.message || 'Nepodařilo se načíst data pro hru.');
+  }
 })();
 </script>
 </body>
