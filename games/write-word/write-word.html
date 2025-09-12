@@ -18,7 +18,7 @@
 <div class="container">
   <div class="card">
     <h1>Write Word (napiš překlad)</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&amp;pack=&lt;packId&gt;&amp;dir=cz-en|en-cz&amp;limit=20</code></p>
     
 <div class="row">
   <div class="badge" id="q" style="font-size:24px"></div>
@@ -32,7 +32,7 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "write-word" });
+  const { pairs, assignmentId, direction } = await GameSDK.init();
   let i=0, right=0;
   const el = id=>document.getElementById(id);
   function show(){
