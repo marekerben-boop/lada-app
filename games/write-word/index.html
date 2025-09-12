@@ -27,11 +27,14 @@
 <div class="container">
   <div class="card">
     <h1>Write Word (napiš překlad)</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&amp;pack=&lt;packId&gt;&amp;dir=cz-en|en-cz&amp;limit=20</code></p>
     
 <div class="row">
   <div class="badge" id="q" style="font-size:24px"></div>
-  <input id="answer" placeholder="Napiš překlad a Enter" />
+  <div class="row grid-2">
+    <button id="listen" title="Přehrát výslovnost">🔊</button>
+    <input id="answer" placeholder="Napiš překlad a Enter" />
+  </div>
   <div id="feedback" class="small"></div>
   <div class="badge" id="progress"></div>
   <button id="finish">Ukončit a uložit</button>
@@ -40,38 +43,45 @@
   </div>
 </div>
 <script>
-(async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "write-word" });
-  let i=0, right=0;
-  const el = id=>document.getElementById(id);
-  function show(){
-    if (!pairs.length){ el("q").textContent="Žádná data"; return; }
+window.addEventListener('DOMContentLoaded', async () => {
+  const { pairs, assignmentId, direction } = await GameSDK.init();
+  let i = 0, right = 0;
+  const el = id => document.getElementById(id);
+  function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+  function show() {
+    if (!pairs.length) { el("q").textContent = "Žádná data"; return; }
     el("q").textContent = pairs[i].question;
-    el("answer").value="";
+    el("answer").value = "";
     el("answer").focus();
-    el("progress").textContent = `${i+1}/${pairs.length} • Správně: ${right}`;
+    el("progress").textContent = `${i + 1}/${pairs.length} • Správně: ${right}`;
     el("feedback").textContent = "";
   }
-  el("answer").addEventListener("keydown", (e)=>{
-    if (e.key==="Enter"){
+  el("listen").addEventListener("click", () => speak(pairs[i].answer));
+  el("answer").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
       const guess = el("answer").value.trim().toLowerCase();
       const ok = guess === pairs[i].answer.trim().toLowerCase();
-      if (ok){ right++; el("feedback").textContent = "✅ Správně"; }
+      if (ok) { right++; el("feedback").textContent = "✅ Správně"; }
       else { el("feedback").textContent = `❌ Správně: ${pairs[i].answer}`; }
-      i++; if (i>=pairs.length){ i=pairs.length-1; }
-      setTimeout(()=>{ if (i < pairs.length-0) { show(); } }, 400);
-      if (i>=pairs.length-0){
+      i++; if (i >= pairs.length) { i = pairs.length - 1; }
+      setTimeout(() => { if (i < pairs.length) { show(); } }, 400);
+      if (i >= pairs.length) {
         // hotovo
       }
     }
   });
-  document.getElementById("finish").onclick = async ()=>{
-    await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: {direction} });
+  document.getElementById("finish").onclick = async () => {
+    await GameSDK.reportResult({ assignmentId, score: right, total: pairs.length, extra: { direction } });
     alert(`Uloženo: ${right}/${pairs.length}`);
     location.href = "/student.html";
   };
   show();
-})();
+});
 </script>
 </body>
 </html>

@@ -112,9 +112,9 @@ function buildLetterBank(answer, needCount){
 }
 
 /* ===== Hra ===== */
-(async () => {
+window.addEventListener('DOMContentLoaded', async () => {
   try {
-    const { pairs, assignmentId, direction, limit } = await GameSDK.init({ activityKey: "missing-letters" });
+    const { pairs, assignmentId, direction } = await GameSDK.init();
 
     let round = 0;
     let score = 0;
@@ -231,7 +231,7 @@ function buildLetterBank(answer, needCount){
         assignmentId,
         score,
         total: pairs.length,
-        extra: { direction, limit, activity: "missing-letters" }
+        extra: { direction, activity: "missing-letters" }
       });
       alert(`Uloženo: ${score}/${pairs.length}`);
       location.href = "/student.html";
@@ -240,11 +240,11 @@ function buildLetterBank(answer, needCount){
     // start
     newRound();
 
-  } catch (err){
+  } catch (err) {
     console.error("Chyba při initu hry:", err);
     alert(err?.message || "Nepodařilo se načíst data pro hru.");
   }
-})();
+});
 </script>
 </body>
 </html>
