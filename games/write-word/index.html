@@ -27,11 +27,14 @@
 <div class="container">
   <div class="card">
     <h1>Write Word (napiš překlad)</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&amp;pack=&lt;packId&gt;&amp;dir=cz-en|en-cz&amp;limit=20</code></p>
     
 <div class="row">
   <div class="badge" id="q" style="font-size:24px"></div>
-  <input id="answer" placeholder="Napiš překlad a Enter" />
+  <div class="row grid-2">
+    <button id="listen" title="Přehrát výslovnost">🔊</button>
+    <input id="answer" placeholder="Napiš překlad a Enter" />
+  </div>
   <div id="feedback" class="small"></div>
   <div class="badge" id="progress"></div>
   <button id="finish">Ukončit a uložit</button>
@@ -41,9 +44,15 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "write-word" });
+  const { pairs, assignmentId, direction } = await GameSDK.init();
   let i=0, right=0;
   const el = id=>document.getElementById(id);
+  function speak(text){
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
   function show(){
     if (!pairs.length){ el("q").textContent="Žádná data"; return; }
     el("q").textContent = pairs[i].question;
@@ -52,6 +61,7 @@
     el("progress").textContent = `${i+1}/${pairs.length} • Správně: ${right}`;
     el("feedback").textContent = "";
   }
+  el("listen").addEventListener("click", ()=>speak(pairs[i].answer));
   el("answer").addEventListener("keydown", (e)=>{
     if (e.key==="Enter"){
       const guess = el("answer").value.trim().toLowerCase();

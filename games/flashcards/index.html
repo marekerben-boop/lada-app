@@ -28,7 +28,7 @@
 <div class="container">
   <div class="card">
     <h1>Flashcards</h1>
-    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&dir=cz-en|en-cz&limit=20</code></p>
+    <p class="small">Parametry v URL: <code>?a=&lt;assignmentId&gt;&amp;pack=&lt;packId&gt;&amp;dir=cz-en|en-cz&amp;limit=20</code></p>
     
 <div id="panel" class="row">
   <div id="q" class="badge" style="font-size:28px"></div>
@@ -49,7 +49,7 @@
 </div>
 <script>
 (async () => {
-  const { pairs, assignmentId, direction } = await GameSDK.init({ activityKey: "flashcards" });
+  const { pairs, assignmentId, direction } = await GameSDK.init();
   let i = 0, right = 0;
   const el = (id)=>document.getElementById(id);
   function show() {
